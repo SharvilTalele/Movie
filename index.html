@@ -1,1 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Movie Night 🎬</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    /* ====== CONFIG: PASTE YOUR GOOGLE DRIVE FILE ID BELOW ====== */
+    /* Find it in your share link: drive.google.com/file/d/THIS_PART/view */
 
+    :root {
+      --film-id: "PASTE_YOUR_FILE_ID_HERE"; /* <-- visual reminder only, see JS below */
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --border: #222230;
+      --accent: #e8c84a;
+      --text: #f0ede8;
+      --muted: #6b6880;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.4;
+    }
+
+    header {
+      width: 100%;
+      max-width: 960px;
+      padding: 2.5rem 2rem 1rem;
+      display: flex;
+      align-items: flex-end;
+      gap: 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .film-strip {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .film-strip span {
+      display: block;
+      width: 8px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 2px;
+      opacity: 0.8;
+    }
+    .film-strip span:nth-child(even) { height: 20px; opacity: 0.4; }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      letter-spacing: 0.04em;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    h1 em {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    .badge {
+      margin-left: auto;
+      background: var(--accent);
+      color: #0a0a0f;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.7rem;
+      border-radius: 2px;
+      align-self: center;
+    }
+
+    main {
+      width: 100%;
+      max-width: 960px;
+      padding: 2rem;
+    }
+
+    .player-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(232,200,74,0.08), 0 40px 80px rgba(0,0,0,0.7);
+    }
+
+    .player-wrap iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Fallback / loading state */
+    .player-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .play-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .play-icon svg { fill: var(--accent); margin-left: 4px; }
+
+    footer {
+      width: 100%;
+      max-width: 960px;
+      padding: 1rem 2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.78rem;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      opacity: 0.8;
+    }
+
+    footer a:hover { opacity: 1; }
+
+    .dot { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; display: inline-block; margin: 0 0.5rem; vertical-align: middle; }
+
+    @media (max-width: 600px) {
+      header { padding: 1.5rem 1rem 1rem; }
+      main { padding: 1.5rem 1rem; }
+      footer { padding: 1rem 1rem 2rem; flex-direction: column; gap: 0.5rem; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="film-strip">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <h1>Movie <em>Night</em></h1>
+    <div class="badge">🔴 Live</div>
+  </header>
+
+  <main>
+    <div class="player-wrap" id="playerWrap">
+      <div class="player-placeholder" id="placeholder">
+        <div class="play-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <span>Loading player…</span>
+      </div>
+      <!-- iframe injected by JS -->
+    </div>
+  </main>
+
+  <footer>
+    <span>Streaming via Google Drive</span>
+    <span><span class="dot"></span> Private link — share carefully</span>
+  </footer>
+
+  <script>
+    // =============================================
+    // 👇 PASTE YOUR GOOGLE DRIVE FILE ID HERE 👇
+    // =============================================
+    const FILE_ID = "PASTE_YOUR_FILE_ID_HERE";
+    // =============================================
+
+    (function () {
+      if (!FILE_ID || FILE_ID === "PASTE_YOUR_FILE_ID_HERE") {
+        document.getElementById("placeholder").innerHTML =
+          `<div class="play-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#e8c84a"><path d="M8 5v14l11-7z"/></svg></div>
+           <span style="color:#e8c84a;font-weight:600;">⚠️ Set your FILE_ID in index.html</span>`;
+        return;
+      }
+
+      const wrap = document.getElementById("playerWrap");
+      const placeholder = document.getElementById("placeholder");
+
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://drive.google.com/file/d/${FILE_ID}/preview`;
+      iframe.allow = "autoplay; fullscreen";
+      iframe.allowFullscreen = true;
+      iframe.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:none;";
+
+      iframe.onload = () => placeholder.remove();
+      wrap.appendChild(iframe);
+    })();
+  </script>
+
+</body>
+</html>
