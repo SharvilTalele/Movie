@@ -219,14 +219,18 @@
       const wrap = document.getElementById("playerWrap");
       const placeholder = document.getElementById("placeholder");
 
-      const iframe = document.createElement("iframe");
-      iframe.src = `https://drive.google.com/file/d/${FILE_ID}/preview`;
-      iframe.allow = "autoplay; fullscreen";
-      iframe.allowFullscreen = true;
-      iframe.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:none;";
-
-      iframe.onload = () => placeholder.remove();
-      wrap.appendChild(iframe);
+      const video = document.createElement("video");
+      video.src = `https://drive.google.com/uc?export=download&id=${FILE_ID}`;
+      video.controls = true;
+      video.style.cssText = "position:absolute;inset:0;width:100%;height:100%;background:#000;";
+      video.oncanplay = () => placeholder.remove();
+      video.onerror = () => {
+        placeholder.innerHTML = `
+          <div class="play-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="#e8c84a"><path d="M8 5v14l11-7z"/></svg></div>
+          <span style="color:#e8c84a;font-weight:600;">⚠️ Google Drive blocked direct streaming.</span>
+          <span style="font-size:0.8rem;text-align:center;max-width:320px;">Try uploading to <a href="https://streamable.com" target="_blank" style="color:#e8c84a">Streamable</a> instead for reliable streaming.</span>`;
+      };
+      wrap.appendChild(video);
     })();
   </script>
 
